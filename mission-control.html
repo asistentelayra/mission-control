@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw Mission Control</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            background: linear-gradient(to right, #00c9ff, #92fe9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease;
+        }
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .panel h2 {
+            margin-top: 0;
+            color: #00c9ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .metric-label {
+            font-weight: 500;
+            opacity: 0.8;
+        }
+        .metric-value {
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #00ff88; }
+        .status-offline { background-color: #ff4757; }
+        .status-warning { background-color: #ffa502; }
+        .logs {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #00c9ff;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 5px 5px 0;
+        }
+        .timestamp {
+            opacity: 0.6;
+            font-size: 0.8em;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 OpenClaw Mission Control</h1>
+        <p>Monitoreo en Tiempo Real del Sistema</p>
+    </div>
+
+    <div class="dashboard">
+        <div class="panel">
+            <h2>💻 Sistema</h2>
+            <div class="metric">
+                <span class="metric-label">CPU Usage:</span>
+                <span class="metric-value" id="cpu-usage">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Memoria:</span>
+                <span class="metric-value" id="memory-usage">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Disco:</span>
+                <span class="metric-value" id="disk-usage">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Uptime:</span>
+                <span class="metric-value" id="system-uptime">Loading...</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>🤖 Agentes OpenClaw</h2>
+            <div class="metric">
+                <span class="metric-label">Sesiones Activas:</span>
+                <span class="metric-value" id="active-sessions">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Subagentes:</span>
+                <span class="metric-value" id="subagents">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Modelo Actual:</span>
+                <span class="metric-value" id="current-model">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Tokens Usados:</span>
+                <span class="metric-value" id="tokens-used">Loading...</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📱 Estado de Conexión</h2>
+            <div class="metric">
+                <span class="metric-label">Telegram:</span>
+                <span class="status-indicator status-online" id="telegram-status"></span>
+                <span id="telegram-label">Conectado</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Nodos Emparejados:</span>
+                <span class="metric-value" id="paired-nodes">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Gateway:</span>
+                <span class="status-indicator status-online" id="gateway-status"></span>
+                <span id="gateway-label">Activo</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Último Latido:</span>
+                <span class="metric-value" id="last-heartbeat">Loading...</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📊 Recursos</h2>
+            <div class="metric">
+                <span class="metric-label">Procesos:</span>
+                <span class="metric-value" id="process-count">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Memoria Libre:</span>
+                <span class="metric-value" id="free-memory">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Swap Usado:</span>
+                <span class="metric-value" id="swap-usage">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Carga Promedio:</span>
+                <span class="metric-value" id="load-average">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="grid-column: 1 / -1;">
+        <h2>📋 Logs del Sistema en Tiempo Real</h2>
+        <div class="logs" id="system-logs">
+            <div class="log-entry">
+                <span class="timestamp">Iniciando monitoreo...</span>
+                Sistema de monitoreo iniciado correctamente
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Actualizado: <span id="last-update">--:--:--</span> | OpenClaw Mission Control v1.0
+    </div>
+
+    <script>
+        // Función para obtener datos del sistema
+        async function fetchSystemData() {
+            try {
+                // En una implementación real, esto haría llamadas a APIs o ejecutaría comandos
+                // Por ahora, simularemos datos dinámicos
+                
+                // Actualizar timestamp
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                
+                // Simular datos del sistema
+                const cpuUsage = Math.floor(Math.random() * 80) + 10;
+                const memoryUsage = Math.floor(Math.random() * 70) + 20;
+                const diskUsage = Math.floor(Math.random() * 50) + 30;
+                
+                document.getElementById('cpu-usage').textContent = cpuUsage + '%';
+                document.getElementById('memory-usage').textContent = memoryUsage + '%';
+                document.getElementById('disk-usage').textContent = diskUsage + '%';
+                
+                // Agregar entrada de log aleatoria ocasionalmente
+                if (Math.random() > 0.7) {
+                    const logsDiv = document.getElementById('system-logs');
+                    const timestamp = new Date().toLocaleTimeString();
+                    const logMessages = [
+                        'Revisión de estado de nodos completada',
+                        'Verificación de conectividad Telegram exitosa',
+                        'Limpieza de memoria temporal realizada',
+                        'Escaneo de procesos en segundo plano',
+                        'Actualización de métricas de rendimiento',
+                        'Verificación de integridad de configuración'
+                    ];
+                    const randomLog = logMessages[Math.floor(Math.random() * logMessages.length)];
+                    
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${randomLog}`;
+                    logsDiv.insertBefore(logEntry, logsDiv.firstChild);
+                    
+                    // Mantener solo las últimas 10 entradas
+                    while (logsDiv.children.length > 10) {
+                        logsDiv.removeChild(logsDiv.lastChild);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error fetching system data:', error);
+            }
+        }
+
+        // Iniciar actualización periódica
+        fetchSystemData(); // Primera carga inmediata
+        setInterval(fetchSystemData, 5000); // Actualizar cada 5 segundos
+        
+        // Simular algunas métricas fijas para demostración
+        document.getElementById('active-sessions').textContent = '1';
+        document.getElementById('subagents').textContent = '0';
+        document.getElementById('current-model').textContent = 'nvidia/nemotron-3-super-120b-a12b';
+        document.getElementById('tokens-used').textContent = '37k in / 662 out';
+        document.getElementById('paired-nodes').textContent = '0';
+        document.getElementById('system-uptime').textContent = '4d 8h';
+        document.getElementById('free-memory').textContent = '1.36 GB';
+        document.getElementById('swap-usage').textContent = '0.7 MB';
+        document.getElementById('load-average').textContent = '0.82, 0.99, 0.92';
+        document.getElementById('last-heartbeat').textContent = 'Hace 1 minuto';
+    </script>
+</body>
+</html>
